@@ -1,0 +1,18 @@
+# Core FastAPI and server dependencies
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+requests
+python-multipart
+
+# Database and scheduling (keep your existing versions)
+SQLAlchemy==2.0.31
+cryptography==43.0.1
+APScheduler==3.10.4
+
+# Only the AI packages you actually need - let pip choose ALL versions
+crewai
+openai
+langchain
+langchain-openai

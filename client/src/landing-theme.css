@@ -1,0 +1,67 @@
+/* =========================================================
+   LANDING PAGE THEME (SCOPED)
+   ========================================================= */
+
+/* Light Mode */
+.landing-root {
+  --background: 36 33% 99%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --primary: 222 47% 11%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 175 84% 32%;
+  --accent-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 175 84% 32%;
+
+  --radius: 0.75rem;
+}
+
+/* Dark Mode (Landing Only) */
+.landing-root.dark {
+  --background: 222 47% 9%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 12%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 222 47% 11%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 210 40% 98%;
+  --primary-foreground: 222 47% 11%;
+
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --accent: 160 84% 39%;
+  --accent-foreground: 210 40% 98%;
+
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 160 84% 39%;
+}
+
+/* SAFETY: prevent lucide SVG icons from breaking */
+.landing-root svg,
+.landing-root svg * {
+  font-family: unset !important;
+}

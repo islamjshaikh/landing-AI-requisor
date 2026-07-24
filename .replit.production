@@ -1,0 +1,58 @@
+modules = ["nodejs-20", "postgresql-16", "python-3.11", "web"]
+run = "./start-production.sh"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-24_05"
+packages = ["jq", "sqlite-interactive"]
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
+run = ["./start-production.sh"]
+
+[[ports]]
+localPort = 80
+externalPort = 80
+
+[[ports]]
+localPort = 8000
+externalPort = 8000
+
+[[ports]]
+localPort = 3000
+externalPort = 3000
+
+[workflows]
+runButton = "Production"
+
+[[workflows.workflow]]
+name = "Production"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start Production Services"
+
+[[workflows.workflow]]
+name = "Start Production Services"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start-production.sh"
+waitForPort = 80
+
+[agent]
+integrations = [
+  "javascript_openai==1.0.0",
+  "javascript_supabase==1.0.0",
+  "javascript_stripe==1.0.0",
+]

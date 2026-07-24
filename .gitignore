@@ -1,0 +1,67 @@
+# Environment variables and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependencies
+node_modules/
+/dist/
+/build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.sqlite
+*.db
+
+# Database backups / dumps — must NEVER be committed (contain user data,
+# bcrypt hashes, OAuth tokens). Existing dumps in the repo should be
+# `git rm`-ed and any credentials they contained must be rotated.
+*.sql
+!migrations/**/*.sql
+
+# Browser-exported cookies / session captures
+cookies.txt
+*.cookies
+*.har
+
+# Cache and temporary files
+.cache/
+.temp/
+.DS_Store
+.replit
+replit.nix
+.wrangler/
+.upm/
+
+# Testing
+coverage/
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution files
+# Anchor to repo root with a leading slash so /build/ matches only the
+# top-level build output directory — not nested build/ folders that are
+# legitimate source code (e.g. client/src/components/modes/build/).
+/dist/
+/build/
+
+# Drizzle migrations
+migrations/
+# Local tooling / machine-specific (not for the repo)
+.local/
+.claude/settings.local.json
+
+# Local MCP test fixtures — deletes and recreates data, never for production
+scripts/seed-mcp-testdata.sql

@@ -1,0 +1,9 @@
+{
+  "name": "test-invitation-script",
+  "version": "1.0.0",
+  "description": "Test script for sending invitations",
+  "type": "module",
+  "dependencies": {
+    "node-fetch": "^3.3.0"
+  }
+}

@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fast and lit animation for "seconds" with Requisor colors */
+@keyframes fastGlow {
+  0%, 100% {
+    color: #ff6b00;
+    text-shadow: 
+      0 0 4px rgba(255, 107, 0, 0.8),
+      0 0 8px rgba(255, 107, 0, 0.6),
+      0 0 12px rgba(255, 69, 0, 0.4);
+  }
+  25% {
+    color: #14b8a6;
+    text-shadow: 
+      0 0 6px rgba(20, 184, 166, 0.9),
+      0 0 10px rgba(20, 184, 166, 0.7),
+      0 0 16px rgba(20, 184, 166, 0.5);
+  }
+  50% {
+    color: #ff4500;
+    text-shadow: 
+      0 0 8px rgba(255, 69, 0, 1),
+      0 0 12px rgba(255, 69, 0, 0.8),
+      0 0 20px rgba(255, 0, 0, 0.5);
+  }
+  75% {
+    color: #10a89a;
+    text-shadow: 
+      0 0 6px rgba(16, 168, 154, 0.9),
+      0 0 10px rgba(20, 184, 166, 0.7),
+      0 0 16px rgba(20, 184, 166, 0.5);
+  }
+}
+
+.animate-fire {
+  animation: fastGlow 1.5s ease-in-out infinite;
+  font-weight: 800;
+  position: relative;
+  display: inline-block;
+}
+
+/* Chat UI Improvements */
+.chat-message {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+.chat-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+.chat-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-track {
+  background: rgba(156, 163, 175, 0.1);
+  border-radius: 4px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}
+
+.chat-scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+
+    --primary: 162 47% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 91.2% 59.8%;
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 215 20.2% 65.1%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 162 47% 50%;
+    --chart-2: 217.2 91.2% 59.8%;
+    --chart-3: 39 100% 50%;
+    --chart-4: 0 100% 50%;
+    --chart-5: 262 83% 58%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 47.4% 11.2%;
+    --sidebar-primary: 162 47% 50%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 162 47% 96%;
+    --sidebar-accent-foreground: 162 47% 40%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 162 47% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  .progress-bar {
+    @apply h-2 rounded-full overflow-hidden bg-muted;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full;
+  }
+  
+  /* Animations for tool recommendations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes progress {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    70% { width: 80%; }
+    90% { width: 90%; }
+    100% { width: 95%; }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+}
