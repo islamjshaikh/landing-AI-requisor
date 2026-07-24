@@ -134,13 +134,24 @@ export async function issueToken(input: IssueTokenInput): Promise<IssuedToken> {
 export async function verifyToken(raw: string | undefined): Promise<McpPrincipal | null> {
   if (!raw) return null;
 
-  const parts = raw.split("_");
-  // rq _ mcp _ <prefix> _ <secret>
-  if (parts.length !== 4) return null;
-  if (`${parts[0]}_${parts[1]}` !== TOKEN_NAMESPACE) return null;
+  // Parse POSITIONALLY, not by splitting on "_".
+  //
+  // The secret is base64url, whose alphabet includes "_" — so roughly half of
+  // all generated tokens contain one. Splitting on "_" and demanding exactly
+  // four parts silently rejected those tokens forever, no matter how many
+  // times the user regenerated. Layout is fixed, so slice it:
+  //
+  //   rq_mcp_ | <8-char prefix> | _ | <secret, any base64url chars>
+  const marker = `${TOKEN_NAMESPACE}_`; // "rq_mcp_"
+  if (!raw.startsWith(marker)) return null;
 
-  const prefix = parts[2];
-  if (!prefix || prefix.length !== PREFIX_LENGTH) return null;
+  const rest = raw.slice(marker.length);
+  if (rest.length < PREFIX_LENGTH + 2) return null;
+  if (rest[PREFIX_LENGTH] !== "_") return null;
+
+  const prefix = rest.slice(0, PREFIX_LENGTH);
+  const secret = rest.slice(PREFIX_LENGTH + 1);
+  if (!prefix || !secret) return null;
 
   const candidates = await db
     .select()
