@@ -44,6 +44,8 @@ export interface SafeApiToken {
   lastUsedAt: Date | null;
   expiresAt: Date | null;
   createdAt: Date;
+  /** "manual" (copied by the user) or "oauth" (issued via the connect flow). */
+  origin: string;
 }
 
 function sha256Hex(input: string): string {
@@ -59,6 +61,7 @@ function toSafe(row: UserApiToken): SafeApiToken {
     lastUsedAt: row.lastUsedAt,
     expiresAt: row.expiresAt,
     createdAt: row.createdAt,
+    origin: (row as any).origin ?? "manual",
   };
 }
 
@@ -118,6 +121,124 @@ export async function issueToken(input: IssueTokenInput): Promise<IssuedToken> {
     .returning();
 
   return { token, record: toSafe(row) };
+}
+
+/**
+ * Mint an access token for the OAuth flow.
+ *
+ * Stored in the SAME user_api_tokens table as manual tokens, tagged
+ * origin='oauth' and bound to the client. That is the whole point of the
+ * design: verifyToken(), the ownership guards and the audit log all treat an
+ * OAuth token identically to a manual one — only the minting path differs.
+ *
+ * Returns both the access token and a refresh token; the refresh token is
+ * stored hashed and lets the client obtain a fresh access token without
+ * bouncing the user through consent again.
+ */
+export interface OAuthIssueInput {
+  userId: string;
+  clientId: string;
+  clientName?: string | null;
+  scopes?: McpScope[];
+  /** Access-token lifetime. Default 60 days. */
+  expiresInDays?: number;
+}
+
+export interface OAuthIssuedToken {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+  tokenId: number;
+}
+
+export async function issueOAuthToken(input: OAuthIssueInput): Promise<OAuthIssuedToken> {
+  const prefix = crypto.randomBytes(6).toString("base64url").slice(0, PREFIX_LENGTH);
+  const secret = crypto.randomBytes(32).toString("base64url");
+  const accessToken = `${TOKEN_NAMESPACE}_${prefix}_${secret}`;
+  const refreshToken = `rq_rt_${crypto.randomBytes(32).toString("base64url")}`;
+
+  const days = input.expiresInDays && input.expiresInDays > 0 ? input.expiresInDays : 60;
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+  const [row] = await db
+    .insert(userApiTokens)
+    .values({
+      userId: input.userId,
+      name: input.clientName?.trim() || "Connected app",
+      tokenPrefix: prefix,
+      tokenHash: sha256Hex(accessToken),
+      last4: secret.slice(-4),
+      scopes: normaliseScopes(input.scopes ?? ["read"]),
+      expiresAt,
+      origin: "oauth",
+      oauthClientId: input.clientId,
+      refreshTokenHash: sha256Hex(refreshToken),
+    })
+    .returning();
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresInSeconds: days * 24 * 60 * 60,
+    tokenId: row.id,
+  };
+}
+
+/**
+ * Exchange a refresh token for a new access token (RFC 6749 §6). Rotates the
+ * access token in place on the existing row and returns a fresh refresh token,
+ * so a leaked-then-used refresh token is invalidated by the next legitimate
+ * refresh.
+ *
+ * Returns null when the refresh token is unknown, revoked, or belongs to a
+ * different client than the one presenting it.
+ */
+export async function rotateAccessToken(
+  rawRefreshToken: string,
+  clientId: string,
+): Promise<OAuthIssuedToken | null> {
+  if (!rawRefreshToken?.startsWith("rq_rt_")) return null;
+
+  const rows = await db
+    .select()
+    .from(userApiTokens)
+    .where(
+      and(
+        eq(userApiTokens.refreshTokenHash, sha256Hex(rawRefreshToken)),
+        isNull(userApiTokens.revokedAt),
+      ),
+    )
+    .limit(1);
+
+  const row = rows[0];
+  if (!row) return null;
+  if (row.oauthClientId !== clientId) return null;
+
+  const prefix = crypto.randomBytes(6).toString("base64url").slice(0, PREFIX_LENGTH);
+  const secret = crypto.randomBytes(32).toString("base64url");
+  const accessToken = `${TOKEN_NAMESPACE}_${prefix}_${secret}`;
+  const refreshToken = `rq_rt_${crypto.randomBytes(32).toString("base64url")}`;
+
+  const days = 60;
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+  await db
+    .update(userApiTokens)
+    .set({
+      tokenPrefix: prefix,
+      tokenHash: sha256Hex(accessToken),
+      last4: secret.slice(-4),
+      refreshTokenHash: sha256Hex(refreshToken),
+      expiresAt,
+    })
+    .where(eq(userApiTokens.id, row.id));
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresInSeconds: days * 24 * 60 * 60,
+    tokenId: row.id,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────

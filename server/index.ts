@@ -340,44 +340,31 @@ app.get("/api/health", (req, res) => {
     try {
       const { createMcpRouter } = await import("./mcp");
       const mcpTokenRoutes = (await import("./routes/mcp-tokens")).default;
+      const { createOAuthRouter, authorizationServerMetadata, protectedResourceMetadata } =
+        await import("./mcp/oauth-routes");
+
       // Token management first — it claims /api/mcp/tokens. The MCP router
       // only binds "/" exactly, so POST /api/mcp still falls through to it.
       app.use("/api/mcp", mcpTokenRoutes);
+      app.use("/api/mcp/oauth", createOAuthRouter());
       app.use("/api/mcp", createMcpRouter());
 
-      // OAuth discovery probes — must answer JSON 404, never HTML.
+      // OAuth discovery metadata (RFC 8414 + RFC 9728).
       //
-      // A spec-compliant MCP client that receives 401 tries to discover an
-      // authorization server at these well-known paths. Without explicit
-      // handlers they fall through to Vite (dev) or the SPA catch-all (prod),
-      // both of which return index.html — and the client dies on
-      // `JSON.parse("<!DOCTYPE ...")` with an error that says nothing about
-      // the real problem (a bad token).
-      //
-      // A clean 404 tells the client "this server has no OAuth; use the
-      // credential you were configured with", which is exactly right: auth
-      // here is a static bearer token, not OAuth 2.1.
-      const oauthProbePaths = [
-        "/.well-known/oauth-authorization-server",
-        "/.well-known/oauth-protected-resource",
-        "/.well-known/openid-configuration",
-      ];
-      for (const probe of oauthProbePaths) {
-        app.get(probe, (_req, res) => {
-          res.status(404).json({
-            error: "not_supported",
-            error_description:
-              "This MCP server does not use OAuth. Authenticate with a bearer " +
-              "token generated in Requisor under Settings → MCP Access.",
-          });
-        });
-        // Same answer under the endpoint-scoped form some clients probe.
-        app.get(`${probe}/api/mcp`, (_req, res) => {
-          res.status(404).json({ error: "not_supported" });
-        });
-      }
+      // A spec-compliant MCP client that gets a 401 fetches these well-known
+      // paths to learn where to authorize. They MUST return JSON, not HTML —
+      // otherwise the client dies on `JSON.parse("<!DOCTYPE ...")` when the SPA
+      // catch-all answers instead. openid-configuration stays a 404: we do
+      // OAuth authorization, not OpenID Connect identity.
+      app.get("/.well-known/oauth-authorization-server", authorizationServerMetadata);
+      app.get("/.well-known/oauth-authorization-server/api/mcp", authorizationServerMetadata);
+      app.get("/.well-known/oauth-protected-resource", protectedResourceMetadata);
+      app.get("/.well-known/oauth-protected-resource/api/mcp", protectedResourceMetadata);
+      app.get("/.well-known/openid-configuration", (_req, res) =>
+        res.status(404).json({ error: "not_supported" }),
+      );
 
-      console.log("✅ MCP server: MOUNTED at /api/mcp");
+      console.log("✅ MCP server: MOUNTED at /api/mcp (OAuth + token auth)");
     } catch (err: any) {
       console.error(
         "⚠️  MCP server failed to mount — continuing without it:",

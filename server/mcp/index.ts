@@ -147,14 +147,23 @@ export function createMcpRouter(): Router {
   router.post("/", mcpLimiter, async (req: Request, res: Response) => {
     const principal = await verifyToken(bearerFrom(req));
     if (!principal) {
-      // WWW-Authenticate lets a spec-aware client prompt for credentials
-      // instead of silently failing.
-      res.setHeader("WWW-Authenticate", 'Bearer realm="requisor-mcp"');
+      // Point spec-aware clients at our protected-resource metadata (RFC 9728)
+      // so they can start the OAuth flow. The resource_metadata parameter is
+      // what triggers Claude/Cursor to open the consent window rather than
+      // just failing. Manual-token users are unaffected — they send a token
+      // and never see this.
+      const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0] || req.protocol;
+      const host = req.headers["x-forwarded-host"] || req.headers.host;
+      const base = `${proto}://${host}`;
+      res.setHeader(
+        "WWW-Authenticate",
+        `Bearer realm="requisor-mcp", resource_metadata="${base}/.well-known/oauth-protected-resource"`,
+      );
       return rpcError(
         res,
         401,
-        "Invalid or missing MCP access token. Generate one in Requisor under " +
-          "Settings → MCP Access and send it as: Authorization: Bearer <token>",
+        "Authentication required. Connect via OAuth, or send a bearer token " +
+          "generated in Requisor under Connect.",
       );
     }
 

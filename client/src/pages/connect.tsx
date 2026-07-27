@@ -65,6 +65,7 @@ interface ApiToken {
   lastUsedAt: string | null;
   expiresAt: string | null;
   createdAt: string;
+  origin: string;
 }
 
 interface Readiness {
@@ -177,9 +178,11 @@ export default function ConnectPage() {
     refetchInterval: 15000,
   });
 
-  const tokens = tokenData?.tokens ?? [];
-  const hasToken = tokens.length > 0;
-  const everUsed = tokens.some((t) => !!t.lastUsedAt);
+  const allTokens = tokenData?.tokens ?? [];
+  const oauthApps = allTokens.filter((t) => t.origin === "oauth");
+  const tokens = allTokens.filter((t) => t.origin !== "oauth");
+  const hasToken = allTokens.length > 0;
+  const everUsed = allTokens.some((t) => !!t.lastUsedAt);
   const stage: "no-token" | "awaiting" | "connected" = !hasToken
     ? "no-token"
     : everUsed
@@ -424,13 +427,85 @@ Accept: application/json, text/event-stream
         </CardContent>
       </Card>
 
+      {/* ── Connected apps (OAuth) ───────────────────────────────────── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Plug className="h-4 w-4 text-emerald-600" />
+            Connected apps
+            <Badge variant="secondary" className="ml-1 text-xs">One-click</Badge>
+          </CardTitle>
+          <CardDescription>
+            Apps connected through the browser approval flow. In Claude or Cursor, add a
+            custom connector with the server URL below &mdash; you approve access in your
+            browser, no token to copy.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {oauthApps.length === 0 ? (
+            <div className="rounded-xl border border-dashed p-6 text-center text-sm">
+              <p className="font-medium">No apps connected yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Paste{" "}
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{serverUrl}</code>{" "}
+                into your AI tool&rsquo;s &ldquo;Add connector&rdquo; and approve when the
+                browser opens.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {oauthApps.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border p-3"
+                  data-testid={`row-oauth-${t.id}`}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${t.lastUsedAt ? "bg-emerald-500" : "bg-amber-400"}`}
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{t.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        connected via OAuth
+                        <span className="mx-1.5">&bull;</span>
+                        {t.lastUsedAt ? (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            last used {formatDate(t.lastUsedAt)}
+                          </span>
+                        ) : (
+                          <span className="text-amber-600 dark:text-amber-400">never used</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 text-destructive hover:bg-destructive/10"
+                    onClick={() => revokeMutation.mutate(t.id)}
+                    disabled={revokeMutation.isPending}
+                    data-testid={`button-revoke-oauth-${t.id}`}
+                  >
+                    <Unplug className="mr-1 h-4 w-4" />
+                    Disconnect
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* ── Tokens ───────────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
           <div>
             <CardTitle className="text-base">Access tokens</CardTitle>
             <CardDescription>
-              One per device or app, so you can revoke them individually.
+              Manual tokens for scripts, Claude Code, or any client without the one-click
+              flow. One per device, revoke individually.
             </CardDescription>
           </div>
           <Button

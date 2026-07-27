@@ -2011,11 +2011,22 @@ export const userApiTokens = pgTable(
     expiresAt: timestamp("expires_at"),
     /** Soft revoke — the row is kept so the audit trail survives. */
     revokedAt: timestamp("revoked_at"),
+    // How this token was minted:
+    //   "manual" — user clicked "Create token" and copied it.
+    //   "oauth"  — issued by the OAuth flow to a registered client.
+    // Everything downstream (verifyToken, guards, audit log) treats both
+    // identically; this only drives how the UI labels and groups them.
+    origin: text("origin").notNull().default("manual"),
+    /** The OAuth client this token was issued to. Null for manual tokens. */
+    oauthClientId: varchar("oauth_client_id"),
+    /** SHA-256 of the refresh token, when one was issued. Null for manual. */
+    refreshTokenHash: varchar("refresh_token_hash", { length: 64 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
     index("IDX_user_api_tokens_prefix").on(table.tokenPrefix),
     index("IDX_user_api_tokens_user").on(table.userId),
+    index("IDX_user_api_tokens_refresh").on(table.refreshTokenHash),
   ],
 );
 
@@ -2060,3 +2071,62 @@ export const mcpToolCalls = pgTable(
 );
 
 export type McpToolCall = typeof mcpToolCalls.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────
+// OAuth 2.1 for MCP — client registration + authorization codes
+// ─────────────────────────────────────────────────────────────────────────
+//
+// These support the one-click connect flow. The tokens OAuth issues are stored
+// in user_api_tokens (origin='oauth'), so everything downstream is unchanged —
+// only the minting path is new.
+
+/**
+ * A dynamically-registered MCP client (RFC 7591). These are PUBLIC clients
+ * using PKCE, so there is deliberately no client secret: an app that runs on a
+ * user's machine can't keep one, and the consent screen — not the client
+ * identity — is the real gate.
+ */
+export const oauthClients = pgTable(
+  "oauth_clients",
+  {
+    clientId: varchar("client_id").primaryKey(),
+    clientName: text("client_name"),
+    /** Allowed redirect URIs, matched EXACTLY at authorize + token time. */
+    redirectUris: jsonb("redirect_uris").notNull().default([]),
+    grantTypes: jsonb("grant_types").notNull().default(["authorization_code", "refresh_token"]),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+);
+
+export type OauthClient = typeof oauthClients.$inferSelect;
+
+/**
+ * A short-lived, single-use authorization code (RFC 6749 §4.1) carrying the
+ * PKCE challenge (RFC 7636). Stored hashed; ~60s TTL; `consumedAt` enforces
+ * one-time exchange so a replayed code fails.
+ */
+export const oauthAuthCodes = pgTable(
+  "oauth_auth_codes",
+  {
+    id: serial("id").primaryKey(),
+    /** SHA-256 of the code. The raw code is only ever in the redirect URL. */
+    codeHash: varchar("code_hash", { length: 64 }).notNull(),
+    clientId: varchar("client_id").notNull(),
+    userId: varchar("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    redirectUri: text("redirect_uri").notNull(),
+    /** PKCE — the verifier is checked against this at /token. */
+    codeChallenge: text("code_challenge").notNull(),
+    codeChallengeMethod: text("code_challenge_method").notNull().default("S256"),
+    scope: text("scope").notNull().default("read"),
+    /** RFC 8707 — the MCP resource this code is bound to. */
+    resource: text("resource"),
+    expiresAt: timestamp("expires_at").notNull(),
+    consumedAt: timestamp("consumed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("IDX_oauth_auth_codes_hash").on(table.codeHash)],
+);
+
+export type OauthAuthCode = typeof oauthAuthCodes.$inferSelect;
