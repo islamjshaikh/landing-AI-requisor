@@ -65,3 +65,6 @@ migrations/
 
 # Local MCP test fixtures — deletes and recreates data, never for production
 scripts/seed-mcp-testdata.sql
+
+# Keep the MCP migration — it must ship even though *.sql is ignored
+!scripts/create-mcp-tables.sql
