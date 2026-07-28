@@ -51,6 +51,7 @@ import {
   FileText,
   TrendingUp,
   Radio,
+  Link as LinkIcon,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -443,13 +444,56 @@ Accept: application/json, text/event-stream
         </CardHeader>
         <CardContent>
           {oauthApps.length === 0 ? (
-            <div className="rounded-xl border border-dashed p-6 text-center text-sm">
-              <p className="font-medium">No apps connected yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Paste{" "}
-                <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{serverUrl}</code>{" "}
-                into your AI tool&rsquo;s &ldquo;Add connector&rdquo; and approve when the
-                browser opens.
+            <div className="rounded-xl border bg-gradient-to-b from-violet-50/60 to-transparent p-5 dark:from-violet-950/20">
+              {/* The URL — the one thing they need to copy, made prominent */}
+              <div className="flex items-center gap-2 rounded-lg border bg-background p-1.5 pl-3 shadow-sm">
+                <LinkIcon className="h-4 w-4 shrink-0 text-violet-500" />
+                <code className="flex-1 truncate text-sm font-medium">{serverUrl}</code>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => copy(serverUrl, "oauth-url")}
+                  className="shrink-0"
+                  data-testid="button-copy-oauth-url"
+                >
+                  {copiedKey === "oauth-url" ? (
+                    <>
+                      <Check className="mr-1.5 h-4 w-4" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="mr-1.5 h-4 w-4" /> Copy URL
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Three steps, laid out visually rather than as prose */}
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {[
+                  { n: 1, icon: Copy, title: "Copy the URL", body: "The server address above." },
+                  { n: 2, icon: Plug, title: "Add a connector", body: "In Claude or Cursor, paste it into “Add custom connector.”" },
+                  { n: 3, icon: CheckCircle2, title: "Approve", body: "A browser opens — click Approve. No token to copy." },
+                ].map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.n} className="rounded-lg border bg-background/60 p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-900 dark:text-violet-300">
+                          {s.n}
+                        </span>
+                        <Icon className="h-4 w-4 text-violet-500" />
+                      </div>
+                      <p className="mt-2 text-sm font-medium">{s.title}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{s.body}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Radio className="h-3.5 w-3.5 animate-pulse text-amber-500" />
+                Once you approve, the app appears here automatically.
               </p>
             </div>
           ) : (
