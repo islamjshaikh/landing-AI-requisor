@@ -192,6 +192,14 @@ export function createOAuthRouter(): Router {
   router.use(express.urlencoded({ extended: false }));
 
   // ── Dynamic client registration (RFC 7591) ────────────────────────────
+  //
+  // The response MUST be a complete client-information response. An earlier,
+  // sparser version omitted client_id_issued_at, client_secret_expires_at and
+  // did not echo response_types — and a client library that considers a
+  // registration response incomplete RETRIES, creating a second client. That
+  // duplicate registration is what stranded the token exchange (the callback
+  // session bound to one client_id, the code issued under another). Returning
+  // the full, spec-shaped body lets the client register exactly once.
   router.post("/register", async (req: Request, res: Response) => {
     try {
       const redirectUris: string[] = Array.isArray(req.body?.redirect_uris)
@@ -201,12 +209,21 @@ export function createOAuthRouter(): Router {
         clientName: req.body?.client_name,
         redirectUris,
       });
+
+      const issuedAt = Math.floor(Date.now() / 1000);
       res.status(201).json({
         client_id: client.clientId,
-        client_name: client.clientName,
+        client_id_issued_at: issuedAt,
+        // Public client (PKCE) — no secret. RFC 7591 uses 0 to mean "no
+        // secret / never expires"; some client libraries require the field
+        // to be present at all.
+        client_secret_expires_at: 0,
+        client_name: client.clientName ?? "MCP Client",
         redirect_uris: client.redirectUris,
-        token_endpoint_auth_method: "none",
         grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        token_endpoint_auth_method: "none",
+        scope: "read",
       });
     } catch (err: any) {
       res.status(400).json({ error: "invalid_client_metadata", error_description: err?.message });
