@@ -77,7 +77,6 @@
     "csv-parse": "^5.6.0",
     "csv-parser": "^3.2.0",
     "date-fns": "^3.6.0",
-    "docx-parser": "^0.2.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.39.1",
     "drizzle-zod": "^0.7.0",
@@ -90,7 +89,7 @@
     "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.2.4",
-    "jspdf": "^3.0.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.453.0",
     "mammoth": "^1.9.1",
     "memorystore": "^1.6.7",
@@ -125,7 +124,6 @@
     "stripe": "^18.4.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
-    "textract": "^2.5.0",
     "uuid": "^11.1.0",
     "vaul": "^1.1.0",
     "wouter": "^3.3.5",
@@ -157,5 +155,9 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "shell-quote": "1.8.4",
+    "fast-xml-parser": "5.9.3"
   }
 }
