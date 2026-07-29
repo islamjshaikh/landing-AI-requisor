@@ -1,0 +1,104 @@
+Request URL
+https://landing-ai-requisor.replit.app/api/mcp/oauth/authorize
+Request Method
+POST
+Status Code
+302 Found
+Referrer Policy
+no-referrer
+alt-svc
+h3=":443"; ma=2592000
+cache-control
+no-cache, no-store, must-revalidate
+content-length
+171
+content-security-policy
+default-src 'self'; connect-src 'self' blob: https://cdn.jsdelivr.net https://*.twitter.com https://*.facebook.com https://*.linkedin.com https://*.instagram.com https://api.stripe.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://*.twitter.com https://*.facebook.com https://*.linkedin.com https://*.instagram.com https://js.stripe.com; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+content-type
+text/html; charset=utf-8
+cross-origin-opener-policy
+same-origin
+cross-origin-resource-policy
+cross-origin
+date
+Wed, 29 Jul 2026 10:21:17 GMT
+expires
+0
+location
+https://claude.ai/api/mcp/auth_callback?code=NB4-ao_nUZmhItO0-SXBkQRlCBC5-bCWcEUlPcMNggE&state=de-dTi4QtmYZQFh7-ORXsbt8M7Qwk73zTYyORQiubpI
+origin-agent-cluster
+?1
+pragma
+no-cache
+referrer-policy
+no-referrer
+server
+Google Frontend
+set-cookie
+connect.sid=s%3AKDybFcM74mf4mBZDDxyYFRs4BvxKRZ9k.hmO0R1%2BfWAvjdZANUYOmgzFUf%2F8USlv%2B9k3%2B2u%2Bk3fQ; Path=/; Expires=Wed, 05 Aug 2026 10:21:17 GMT; HttpOnly; Secure; SameSite=Lax
+strict-transport-security
+max-age=63072000; includeSubDomains
+strict-transport-security
+max-age=31536000; includeSubDomains
+vary
+Accept
+via
+1.1 google
+x-cloud-trace-context
+7edafd8d0fe4d62e1739e08165d85225
+x-content-type-options
+nosniff
+x-dns-prefetch-control
+off
+x-download-options
+noopen
+x-frame-options
+DENY
+x-permitted-cross-domain-policies
+none
+x-xss-protection
+0
+:authority
+landing-ai-requisor.replit.app
+:method
+POST
+:path
+/api/mcp/oauth/authorize
+:scheme
+https
+accept
+text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+accept-encoding
+gzip, deflate, br, zstd
+accept-language
+en-GB,en-US;q=0.9,en;q=0.8,ar;q=0.7,hi;q=0.6
+cache-control
+max-age=0
+content-length
+360
+content-type
+application/x-www-form-urlencoded
+cookie
+connect.sid=s%3AKDybFcM74mf4mBZDDxyYFRs4BvxKRZ9k.hmO0R1%2BfWAvjdZANUYOmgzFUf%2F8USlv%2B9k3%2B2u%2Bk3fQ; GAESA=CqYBMDAxNTQ4ZjcyOWY1NjY5NzNjZDFkZTUxODRjOWRhY2Q0ZDlhMWZhM2I2NDIxZDRkNzY5YmU3YTliOTE3ZWM5YjNiMzU4MDNhZDY0Yjc0M2U3MGE5ZTdiODdhZWM1YjM1MGM3MGVmOTQ3MmMyNTI3NDEzMmZjOGEwM2I4YWM5YjI5OWY0MTNjMTA2NjA4ZDI1ZDQ1ZjYyZjk1ZThhMDc1NDU2NjMwNxDssJDr-jM
+origin
+null
+priority
+u=0, i
+sec-ch-ua
+"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"
+sec-ch-ua-mobile
+?0
+sec-ch-ua-platform
+"Windows"
+sec-fetch-dest
+document
+sec-fetch-mode
+navigate
+sec-fetch-site
+same-origin
+sec-fetch-user
+?1
+upgrade-insecure-requests
+1
+user-agent
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36
