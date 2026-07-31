@@ -338,6 +338,12 @@ app.get("/api/health", (req, res) => {
     // import here must degrade to "MCP unavailable", never take the whole
     // product offline for every user.
     try {
+      // Auto-create the MCP tables if they're missing, so deploying needs only
+      // the code — no manual `psql` migration step. Idempotent (CREATE ... IF
+      // NOT EXISTS), so it's a no-op once the tables exist.
+      const { ensureMcpSchema } = await import("./mcp/auto-migrate");
+      await ensureMcpSchema();
+
       const { createMcpRouter } = await import("./mcp");
       const mcpTokenRoutes = (await import("./routes/mcp-tokens")).default;
       const { createOAuthRouter, authorizationServerMetadata, protectedResourceMetadata } =
