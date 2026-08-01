@@ -210,6 +210,13 @@ export function createOAuthRouter(): Router {
         redirectUris,
       });
 
+      // Trace log — lets you follow the OAuth flow in the deploy logs and see
+      // exactly which step a client reaches (register → authorize → token).
+      console.log(
+        `[oauth] REGISTER  client=${client.clientId} name=${client.clientName ?? "?"} ` +
+          `redirects=${JSON.stringify(client.redirectUris)}`,
+      );
+
       const issuedAt = Math.floor(Date.now() / 1000);
       res.status(201).json({
         client_id: client.clientId,
@@ -304,6 +311,13 @@ export function createOAuthRouter(): Router {
       resource: b.resource ? String(b.resource) : undefined,
     });
 
+    // Trace: code issued and redirected. If the deploy log shows this line but
+    // NO "[oauth] TOKEN" line follows, the client never came back to exchange
+    // the code — the failure is on the client side, after our redirect.
+    console.log(
+      `[oauth] APPROVE   client=${client.clientId} code issued, redirecting to ${new URL(redirectUri).host}`,
+    );
+
     const url = new URL(redirectUri);
     url.searchParams.set("code", code);
     if (state) url.searchParams.set("state", state);
@@ -313,6 +327,12 @@ export function createOAuthRouter(): Router {
   // ── Token endpoint — code exchange + refresh (RFC 6749) ────────────────
   router.post("/token", async (req: Request, res: Response) => {
     const grant = String(req.body?.grant_type || "");
+    // Trace: the client DID come back to exchange. Its mere presence answers
+    // "does the client call /token?" — the crux of the whole investigation.
+    console.log(
+      `[oauth] TOKEN     grant=${grant} client=${req.body?.client_id ?? "?"} ` +
+        `has_code=${!!req.body?.code} has_verifier=${!!req.body?.code_verifier}`,
+    );
 
     if (grant === "authorization_code") {
       const consumed = await consumeAuthCode({
@@ -322,8 +342,10 @@ export function createOAuthRouter(): Router {
         codeVerifier: String(req.body?.code_verifier || ""),
       });
       if (!consumed) {
+        console.log(`[oauth] TOKEN     REJECTED invalid_grant (code/PKCE/redirect mismatch)`);
         return res.status(400).json({ error: "invalid_grant" });
       }
+      console.log(`[oauth] TOKEN     OK access token issued for user=${consumed.userId}`);
       const client = await getClient(consumed.clientId);
       const issued = await issueOAuthToken({
         userId: consumed.userId,
