@@ -89,9 +89,20 @@ export async function getClient(clientId: string): Promise<RegisteredClient | nu
  * Redirect-URI allowlist. MCP clients use one of:
  *   - loopback (Claude Desktop / Cursor spawn a local listener)
  *   - an https URL (hosted clients like claude.ai)
- * Anything else — custom schemes, http to a non-loopback host — is refused,
- * which closes the classic token-exfiltration-via-redirect hole.
+ * Allowed:
+ *   - https to anywhere (hosted clients like claude.ai)
+ *   - http ONLY to loopback (127.0.0.1 / localhost / [::1]) — the MCP Inspector
+ *     and native apps that spin up a local listener
+ *   - custom private-use schemes (cursor://, vscode://, …) — how native MCP
+ *     clients receive the callback, per RFC 8252 §7.1
+ *
+ * Refused: http to a non-loopback host (the classic plaintext-exfiltration
+ * hole) and known code-execution schemes. Custom schemes are safe here because
+ * the consent screen, exact redirect-URI matching, and mandatory PKCE are the
+ * real protections — not the scheme allowlist.
  */
+const DANGEROUS_SCHEMES = new Set(["javascript:", "data:", "vbscript:", "file:", "blob:"]);
+
 export function isAllowedRedirect(uri: string): boolean {
   let u: URL;
   try {
@@ -99,14 +110,16 @@ export function isAllowedRedirect(uri: string): boolean {
   } catch {
     return false;
   }
+  if (DANGEROUS_SCHEMES.has(u.protocol)) return false;
   if (u.protocol === "https:") return true;
-  if (
-    (u.protocol === "http:") &&
-    (u.hostname === "127.0.0.1" || u.hostname === "localhost" || u.hostname === "[::1]")
-  ) {
-    return true;
+  if (u.protocol === "http:") {
+    return (
+      u.hostname === "127.0.0.1" || u.hostname === "localhost" || u.hostname === "[::1]"
+    );
   }
-  return false;
+  // Custom private-use scheme from a native client (cursor://, vscode://, …).
+  // Require an actual scheme so a malformed value can't slip through.
+  return /^[a-z][a-z0-9+.-]*:$/i.test(u.protocol);
 }
 
 /** Exact match — never prefix or startsWith, which would be exploitable. */
